@@ -54,4 +54,4 @@ eval "$(zoxide init zsh)"
 ```
 
 Made with ❤️ by [Michael Hurley D/B/A Hustle Launch](https://www.michaelchurley.com)
-![hustle-launch-logo](https://raw.githubusercontent.com/michaelmonetized/my.hustlelaunch.com/master/public/hustle-launch-animated.svg)
+![hustle-launch-animated](https://github.com/michaelmonetized/ascii-commit-graph/assets/162010215/da2f7c1e-d0b9-48d6-b913-df3c6f40d8c0)
