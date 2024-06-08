@@ -3,6 +3,8 @@
 This is a command line tool to show a graph of your commits as ascii art.
 ![ascii-commit-graph-screenshot](https://raw.githubusercontent.com/michaelmonetized/ascii-commit-graph/master/screenshot.png)
 
+## MAIN IS BROKEN [GO TO REALESES](https://github.com/michaelmonetized/ascii-commit-graph/releases) for the working version or choose branch ["rc"](https://github.com/michaelmonetized/ascii-commit-graph/tree/rc) or tag ["v1.0.0-rc"](https://github.com/michaelmonetized/ascii-commit-graph/releases/tag/v1.0.0-rc)
+
 ## Dependencies
 
 - [gh](https://github.com/cli/cli) _optional for showing issues with `--show-issues`_
