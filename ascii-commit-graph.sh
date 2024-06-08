@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
+ISGIT=false
 if [ -d ./.git ] || git rev-parse --git-dir >/dev/null 2>&1; then
+  ISGIT=true
+fi
+
+if $ISGIT; then
   # Check if the branch has any commits
   if ! git log --pretty=format:"%cd" --date=short >/dev/null 2>&1; then
     # Get the current branch name
@@ -24,11 +29,22 @@ if [ -d ./.git ] || git rev-parse --git-dir >/dev/null 2>&1; then
 
   # Set grid dimensions
   GRID_ROWS=6
-  GRID_COLS=52
+  GRID_COLS=51
 
   # Get current week and day numbers
   TODAY_WK_NUM=$(date +%V)
   TODAY_WK_DAY_NUM=$(date +%w) # 0 (Sunday) to 6 (Saturday)
+
+  if [[ $@ == *"--this-year"* ]]; then
+    GRID_COLS=$((TODAY_WK_NUM - 1))
+  fi
+
+  if [[ $@ == *"--full-width"* ]]; then
+    GRID_COLS=$(tput cols)
+    DIFF=$(((TODAY_WK_NUM - $GRID_COLS) * -1))
+    GRID_COLS=$((GRID_COLS - 1))
+    TODAY_WK_NUM=$((TODAY_WK_NUM + $DIFF))
+  fi
 
   # Initialize commits array
   commits=()
@@ -38,9 +54,13 @@ if [ -d ./.git ] || git rev-parse --git-dir >/dev/null 2>&1; then
     count=$(git log --pretty=format:"%cd" --date=short | grep "$date" | wc -l | xargs)
 
     if ((week < TODAY_WK_NUM)); then
-      adjusted_week=$(((week - TODAY_WK_NUM + 51) % 51))
+      adjusted_week=$(((week - TODAY_WK_NUM + $GRID_COLS) % $GRID_COLS))
     else
-      adjusted_week=$((week - TODAY_WK_NUM + 51))
+      adjusted_week=$((week - TODAY_WK_NUM + $GRID_COLS))
+    fi
+
+    if [[ $@ == *"--full-width"* ]]; then
+      adjusted_week=$((adjusted_week + $DIFF))
     fi
 
     commits+=("$day,$adjusted_week,$count")
@@ -58,7 +78,7 @@ if [ -d ./.git ] || git rev-parse --git-dir >/dev/null 2>&1; then
 
   # Print the grid
   for row in $(seq 0 $GRID_ROWS); do
-    for col in $(seq 0 $((GRID_COLS - 1))); do
+    for col in $(seq 0 $GRID_COLS); do
       count=0
       for entry in "${commits[@]}"; do
         IFS=',' read -r entry_day entry_week entry_count <<<"$entry"
@@ -82,4 +102,14 @@ if [ -d ./.git ] || git rev-parse --git-dir >/dev/null 2>&1; then
     done
     echo -e "\033[0m" # Reset color
   done
+
+  # show issues if --show-issues is passed anywhere in $@
+  if [[ $@ == *"--show-issues"* ]]; then
+    gh issue list 2>/dev/null
+  fi
+
+  # show todos if --show-todos is passed anywhere in $@
+  if [[ $@ == *"--show-todos"* ]]; then
+    rg "(\[\s\]|TODO|BUG|FIXME|ISSUE|HACK|\[\-\])" -g '!*/lib/*' -g '!*/node_modules/*' -g '!*/vendor/*' -NU --color=always
+  fi
 fi
