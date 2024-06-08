@@ -88,15 +88,16 @@ else
     DATES+=($(gh api \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
-      /repos/michaelmonetized/$repo/commits --jq '.[].commit.author.date' | while read -r date; do; date -u -d "$date" +"%Y-%m-%d"; done))
+      /repos/michaelmonetized/$repo/commits --jq '.[].commit.author.date'))
   done
 
   for date in $DATES; do
     week=$(date -j -f "%Y-%m-%d" "$date" +%V)
     day=$(date -j -f "%Y-%m-%d" "$date" +%w)
+    date_format=$(date -j -f "%Y-%m-%d" "$date" +"%Y-%m-%d")
 
     # to get count of commits for $date we need to grep $DATES for $date and then count the number of lines
-    count=$(grep "$date" $DATES | wc -l | xargs)
+    count=$(echo "$DATES" | grep "$date_format" | wc -l | xargs)
 
     if ((week < TODAY_WK_NUM)); then
       adjusted_week=$(((week - TODAY_WK_NUM + $GRID_COLS) % $GRID_COLS))
