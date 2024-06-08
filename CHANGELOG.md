@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.3
+
+- [x] Added --author flag back to protect cd from slowing down
+- [x] wrapped regex pattern fot todos in word boundaries to be less greedy
+- [x] Added more glob excludes to cleanup todos
+
 ## 1.0.2
 
 - [x] Fixed issue with dates that have a time component
@@ -18,5 +24,7 @@
 ## ROADMAP
 
 - [ ] Add color options
+- [ ] Merge main into rc
+- [ ] Create a release for 1.0.3
 
 we'll need to find a way to dim the color for the counts.

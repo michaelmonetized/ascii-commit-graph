@@ -76,7 +76,7 @@ if $ISGIT; then
 
     commits+=("$day,$adjusted_week,$count")
   done
-else
+elif [[ $@ == *"--author"* ]]; then
   REPOS=$(gh api \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -110,32 +110,34 @@ else
   done
 fi
 
-# Print the grid
-for row in $(seq 0 $GRID_ROWS); do
-  for col in $(seq 0 $GRID_COLS); do
-    count=0
-    for entry in "${commits[@]}"; do
-      IFS=',' read -r entry_day entry_week entry_count <<<"$entry"
-      if [[ $entry_day -eq $row && $entry_week -eq $col ]]; then
-        count=$entry_count
-        break
+if $ISGIT || [[ $@ == *"--author"* ]]; then
+  # Print the grid
+  for row in $(seq 0 $GRID_ROWS); do
+    for col in $(seq 0 $GRID_COLS); do
+      count=0
+      for entry in "${commits[@]}"; do
+        IFS=',' read -r entry_day entry_week entry_count <<<"$entry"
+        if [[ $entry_day -eq $row && $entry_week -eq $col ]]; then
+          count=$entry_count
+          break
+        fi
+      done
+
+      if [ "$count" -gt 2 ]; then
+        COLOR=3
+      elif [ "$count" -gt 1 ]; then
+        COLOR=2
+      elif [ "$count" -gt 0 ]; then
+        COLOR=1
+      else
+        COLOR=0
       fi
+
+      echo -ne "${COLORS[$COLOR]}\033[0m"
     done
-
-    if [ "$count" -gt 2 ]; then
-      COLOR=3
-    elif [ "$count" -gt 1 ]; then
-      COLOR=2
-    elif [ "$count" -gt 0 ]; then
-      COLOR=1
-    else
-      COLOR=0
-    fi
-
-    echo -ne "${COLORS[$COLOR]}\033[0m"
+    echo -e "\033[0m" # Reset color
   done
-  echo -e "\033[0m" # Reset color
-done
+fi
 
 if $ISGIT; then
   # show issues if --show-issues is passed anywhere in $@
@@ -145,6 +147,6 @@ if $ISGIT; then
 
   # show todos if --show-todos is passed anywhere in $@
   if [[ $@ == *"--show-todos"* ]]; then
-    rg "(\[\s\]|TODO|BUG|FIXME|ISSUE|HACK|\[\-\])" -g '!*/lib/*' -g '!*/node_modules/*' -g '!*/vendor/*' -NU --color=always
+    rg "\W(\[\s\]|TODO|BUG|FIXME|ISSUE|HACK|\[\-\])\W" -g '!*/lib/*' -g '!*/node_modules/*' -g '!*/vendor/*' -g '!*.map' -g '!*.min.*' -g '!*/extensions/*' -NU --color=always
   fi
 fi

@@ -79,7 +79,13 @@ eval "$(zoxide init zsh)"
 
 ## Bonus new features for gh users
 
-when you're not in a git repo you can see your commit history for all your repos.
+### Author contribution history
+
+when you're not in a git repo you can see the commit history for all the repos you own.
+
+```bash
+ascii-commit-graph --author
+```
 
 ### Show issues
 
