@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.0.2
+
+- [x] Fixed issue with dates that have a time component
+- [x] Added max-width behavior if terminal width is less than 52
+- [x] Fixed issue with gh api contributions
+- [x] Removed --author option
+- [x] Added feature to show logged in user's commits when not inside a git repo
+
 ## 1.0.1
 
 - [x] Moved direcorty is repo or in git repo check to the top of the script as a variable

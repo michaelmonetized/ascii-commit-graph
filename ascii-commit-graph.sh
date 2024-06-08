@@ -25,7 +25,7 @@ if [[ $@ == *"--this-year"* ]]; then
   GRID_COLS=$((TODAY_WK_NUM - 1))
 fi
 
-if [[ $@ == *"--full-width"* ]]; then
+if [[ $@ == *"--full-width"* ]] || (($(tput cols) < (($GRID_COLS + 1)))); then
   GRID_COLS=$(tput cols)
   DIFF=$(((TODAY_WK_NUM - $GRID_COLS) * -1))
   GRID_COLS=$((GRID_COLS - 1))
@@ -60,7 +60,7 @@ if $ISGIT; then
   DATES=$(git log --pretty=format:"%cd" --date=short | sort | uniq)
 
   for date in $DATES; do
-    week=$(date -j -f "%Y-%m-%d" "$date" +%V)
+    week=$(date -j -f "%Y-%m-%d" "$date" +%V | sed 's/^0*//')
     day=$(date -j -f "%Y-%m-%d" "$date" +%w) # 0 (Sunday) to 6 (Saturday)
     count=$(git log --pretty=format:"%cd" --date=short | grep "$date" | wc -l | xargs)
 
@@ -77,41 +77,37 @@ if $ISGIT; then
     commits+=("$day,$adjusted_week,$count")
   done
 else
-  #if [[ $@ == *"--author"* ]]; then
   REPOS=$(gh api \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
-    /users/michaelmonetized/repos --jq '.[].name')
+    /user/repos --jq '.[].name')
 
-  DATES=()
   for repo in $REPOS; do
-    DATES+=($(gh api \
+    raw_dates=$(gh api \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
-      /repos/michaelmonetized/$repo/commits --jq '.[].commit.author.date'))
+      /repos/michaelmonetized/$repo/commits --jq '.[].commit.author.date')
+
+    for date in $raw_dates; do
+      date_format=$(echo $date | cut -d'T' -f1)
+
+      week=$(date -j -f "%Y-%m-%d" "$date_format" +%V | sed 's/^0*//')
+      day=$(date -j -f "%Y-%m-%d" "$date_format" +%w)
+      count=$(grep -c "$date_format" <<<"$raw_dates")
+
+      if [[ $week -lt $TODAY_WK_NUM ]]; then
+        adjusted_week=$(((week - TODAY_WK_NUM + $GRID_COLS) % $GRID_COLS))
+      else
+        adjusted_week=$((week - TODAY_WK_NUM + $GRID_COLS))
+      fi
+
+      if [[ $@ == *"--full-width"* ]]; then
+        adjusted_week=$((adjusted_week + $DIFF))
+      fi
+
+      commits+=("$day,$adjusted_week,$count")
+    done
   done
-
-  for date in $DATES; do
-    week=$(date -j -f "%Y-%m-%d" "$date" +%V)
-    day=$(date -j -f "%Y-%m-%d" "$date" +%w)
-    date_format=$(date -j -f "%Y-%m-%d" "$date" +"%Y-%m-%d")
-
-    # to get count of commits for $date we need to grep $DATES for $date and then count the number of lines
-    count=$(echo "$DATES" | grep "$date_format" | wc -l | xargs)
-
-    if ((week < TODAY_WK_NUM)); then
-      adjusted_week=$(((week - TODAY_WK_NUM + $GRID_COLS) % $GRID_COLS))
-    else
-      adjusted_week=$((week - TODAY_WK_NUM + $GRID_COLS))
-    fi
-
-    if [[ $@ == *"--full-width"* ]]; then
-      adjusted_week=$((adjusted_week + $DIFF))
-    fi
-
-    commits+=("$day,$adjusted_week,$count")
-  done
-  #fi
 fi
 
 # Print the grid
